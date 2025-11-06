@@ -504,7 +504,39 @@ const CourseInfo = () => {
               return (
                 <div key={course.id || course._id || index} className="module-card">
                   <div className="course-header">
-                    <h3 className="module-title">{getCourseTitle(course)}</h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                      <h3 className="module-title">{getCourseTitle(course)}</h3>
+                      {course.status === 'active' ? (
+                        <span style={{
+                          padding: '4px 12px',
+                          background: '#4caf50',
+                          color: 'white',
+                          borderRadius: '20px',
+                          fontSize: '0.75rem',
+                          fontWeight: 'bold',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px'
+                        }}>
+                          Đang triển khai 
+                        </span>
+                      )
+                      : (
+                        <span
+                          style={{
+                            padding: '4px 12px',
+                            background: '#f44336',
+                            color: 'white',
+                            borderRadius: '20px',
+                            fontSize: '0.75rem',
+                            fontWeight: 'bold',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px',
+                          }}
+                        >
+                          Ngừng triển khai
+                        </span>
+                      )}
+                    </div>
                     {!isMultiModePrice && (
                       <span className="course-price-small">{priceDisplay}</span>
                     )}
@@ -590,12 +622,21 @@ const CourseInfo = () => {
                   <div className="course-action">
                     <button 
                       className="btn-register-course"
+                      disabled={course.status !== 'active'}
                       onClick={() => {
+                        // Chỉ cho phép scroll nếu course status là active
+                        if (course.status !== 'active') {
+                          return
+                        }
                         // Scroll to registration form or show modal
                         const ctaSection = document.querySelector('.cta')
                         if (ctaSection) {
                           ctaSection.scrollIntoView({ behavior: 'smooth' })
                         }
+                      }}
+                      style={{
+                        opacity: course.status === 'active' ? 1 : 0.6,
+                        cursor: course.status === 'active' ? 'pointer' : 'not-allowed'
                       }}
                     >
                       <span className="btn-icon">📝</span>

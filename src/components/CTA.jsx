@@ -1,14 +1,19 @@
 import React, { useState } from 'react'
 
-const CTA = () => {
+const CTA = ({ status = 'active' }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: ''
   })
 
+  const isActive = status === 'active'
+
   const handleSubmit = (e) => {
     e.preventDefault()
+    if (!isActive) {
+      return
+    }
     alert(`Cảm ơn ${formData.name}! Chúng tôi sẽ liên hệ với bạn sớm nhất qua email ${formData.email} hoặc số điện thoại ${formData.phone}`)
     setFormData({ name: '', email: '', phone: '' })
   }
@@ -59,7 +64,15 @@ const CTA = () => {
                 required
               />
             </div>
-            <button type="submit" className="btn btn-primary btn-large">
+            <button 
+              type="submit" 
+              className="btn btn-primary btn-large"
+              disabled={!isActive}
+              style={{
+                opacity: isActive ? 1 : 0.6,
+                cursor: isActive ? 'pointer' : 'not-allowed'
+              }}
+            >
               Đăng Ký Ngay - Nhận Ưu Đãi 30%
             </button>
           </form>
