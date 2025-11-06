@@ -148,3 +148,151 @@ export const fetchCourseById = async (courseId) => {
     throw error
   }
 }
+
+/**
+ * Fetch all subjects from the API
+ * @param {Object} params - Query parameters { page, limit, search, status }
+ * @returns {Promise<Array>} Array of subject objects
+ */
+export const fetchSubjects = async (params = {}) => {
+  try {
+    const url = `${API_BASE_URL}/subjects`
+    console.log('Fetching subjects from:', url)
+    
+    const headers = getAuthHeaders()
+    
+    // Build query string
+    const queryParams = new URLSearchParams()
+    if (params.page) queryParams.append('page', params.page)
+    if (params.limit) queryParams.append('limit', params.limit)
+    if (params.search) queryParams.append('search', params.search)
+    if (params.status) queryParams.append('status', params.status)
+    
+    const queryString = queryParams.toString()
+    const fullUrl = queryString ? `${url}?${queryString}` : url
+    
+    const response = await fetch(fullUrl, {
+      method: 'GET',
+      headers: headers,
+      credentials: 'same-origin',
+    })
+
+    if (response.status === 401 || response.status === 403) {
+      const errorText = await response.text()
+      console.error('Authentication failed:', errorText)
+      throw new Error('Token không hợp lệ hoặc đã hết hạn. Vui lòng cập nhật token.')
+    }
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('API Error Response:', errorText)
+      throw new Error(`HTTP ${response.status}: ${response.statusText}. ${errorText || ''}`)
+    }
+
+    const data = await response.json()
+    console.log('API Response data:', data)
+    
+    // Handle different response formats
+    // API returns { success: true, data: [...], pagination: {...} } or directly array
+    const subjectsData = Array.isArray(data) 
+      ? data 
+      : data.data || data.subjects || data.results || []
+    
+    return subjectsData
+  } catch (error) {
+    console.error('Error fetching subjects:', error)
+    throw error
+  }
+}
+
+/**
+ * Fetch all branches from the API
+ * @returns {Promise<Array>} Array of branch objects
+ */
+export const fetchBranches = async () => {
+  try {
+    const url = `${API_BASE_URL}/branches`
+    console.log('Fetching branches from:', url)
+    
+    const headers = getAuthHeaders()
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: headers,
+      credentials: 'same-origin',
+    })
+
+    if (response.status === 401 || response.status === 403) {
+      const errorText = await response.text()
+      console.error('Authentication failed:', errorText)
+      throw new Error('Token không hợp lệ hoặc đã hết hạn. Vui lòng cập nhật token.')
+    }
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('API Error Response:', errorText)
+      throw new Error(`HTTP ${response.status}: ${response.statusText}. ${errorText || ''}`)
+    }
+
+    const data = await response.json()
+    console.log('API Response data:', data)
+    
+    // Handle different response formats
+    // API returns { success: true, data: [...] } or directly array
+    const branchesData = Array.isArray(data) 
+      ? data 
+      : data.data || data.branches || data.results || []
+    
+    return branchesData
+  } catch (error) {
+    console.error('Error fetching branches:', error)
+    throw error
+  }
+}
+
+/**
+ * Create a new lead
+ * @param {Object} leadData - Lead data
+ * @param {Object} leadData.name - Lead name {firstName, middleName, lastName}
+ * @param {Object} leadData.contact - Contact info {phone, email}
+ * @param {string} leadData.source - Lead source
+ * @param {string} leadData.gradeCode - Grade code
+ * @param {Array} leadData.interestedSubjectIds - Array of subject IDs
+ * @param {string} leadData.notes - Additional notes
+ * @param {string} leadData.branchId - Branch ID
+ * @returns {Promise<Object>} Created lead data
+ */
+export const createLead = async (leadData) => {
+  try {
+    // Use /api/tenant/leads endpoint
+    const url = '/api/tenant/leads'
+    console.log('Creating lead at:', url)
+    
+    const headers = getAuthHeaders()
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: headers,
+      credentials: 'same-origin',
+      body: JSON.stringify(leadData)
+    })
+
+    if (response.status === 401 || response.status === 403) {
+      const errorText = await response.text()
+      console.error('Authentication failed:', errorText)
+      throw new Error('Token không hợp lệ hoặc đã hết hạn. Vui lòng cập nhật token.')
+    }
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: response.statusText }))
+      const errorMessage = errorData.message || errorData.error || `HTTP ${response.status}: ${response.statusText}`
+      console.error('API Error Response:', errorMessage)
+      throw new Error(errorMessage)
+    }
+
+    const data = await response.json()
+    console.log('Lead created successfully:', data)
+    return data
+  } catch (error) {
+    console.error('Error creating lead:', error)
+    throw error
+  }
+}
