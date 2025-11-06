@@ -377,7 +377,7 @@ const CourseInfo = () => {
         <section className="course-info">
           <div className="container">
             <div className="section-header">
-              <h2 className="section-title">Các Khóa Học Của Chúng Tôi</h2>
+              <h2 className="section-title">Các Khóa Học Tham Khảo</h2>
               <p className="section-subtitle">Khám phá các khóa học chất lượng cao được thiết kế đặc biệt cho bạn</p>
             </div>
             <div className="loading-container">
