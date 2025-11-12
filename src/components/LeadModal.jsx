@@ -1,25 +1,42 @@
 import React, { useState, useEffect } from 'react'
 import { createLead, fetchBranches, fetchSubjects } from '../services/api'
 
-const LeadModal = ({ isOpen, onClose, onSuccess }) => {
-  const [formData, setFormData] = useState({
+const LeadModal = ({
+  isOpen,
+  onClose,
+  onSuccess,
+  defaultBranchId = '',
+  defaultBranchName = '',
+  defaultCourseId = '',
+  defaultCourseName = ''
+}) => {
+  const createInitialFormData = () => ({
     lastName: '',
     middleName: '',
     firstName: '',
     phone: '',
     email: '',
-    branchId: '',
+    branchId: defaultBranchId || '',
     source: 'campaign', // Default to campaign
     gradeCode: '',
     interestedSubjectIds: [],
-    notes: ''
+    notes: '',
+    courseId: defaultCourseId || '',
+    courseName: defaultCourseName || ''
   })
+
+  const [formData, setFormData] = useState(createInitialFormData)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [branches, setBranches] = useState([])
   const [subjects, setSubjects] = useState([])
   const [loadingBranches, setLoadingBranches] = useState(false)
   const [loadingSubjects, setLoadingSubjects] = useState(false)
+  const [selectedCourseInfo, setSelectedCourseInfo] = useState({
+    id: defaultCourseId || '',
+    name: defaultCourseName || '',
+    branchName: defaultBranchName || ''
+  })
   const [grades, setGrades] = useState([
     { code: 'G6', label: 'Lớp 6' },
     { code: 'G7', label: 'Lớp 7' },
@@ -42,16 +59,15 @@ const LeadModal = ({ isOpen, onClose, onSuccess }) => {
     if (isOpen) {
       // Reset form when modal opens
       setFormData({
-        lastName: '',
-        middleName: '',
-        firstName: '',
-        phone: '',
-        email: '',
-        branchId: '',
-        source: 'campaign', // Default to campaign
-        gradeCode: '',
-        interestedSubjectIds: [],
-        notes: ''
+        ...createInitialFormData(),
+        branchId: defaultBranchId || '',
+        courseId: defaultCourseId || '',
+        courseName: defaultCourseName || ''
+      })
+      setSelectedCourseInfo({
+        id: defaultCourseId || '',
+        name: defaultCourseName || '',
+        branchName: defaultBranchName || ''
       })
       setError(null)
       
@@ -118,7 +134,7 @@ const LeadModal = ({ isOpen, onClose, onSuccess }) => {
         console.error('Error loading data:', err)
       })
     }
-  }, [isOpen])
+  }, [isOpen, defaultBranchId, defaultCourseId, defaultCourseName, defaultBranchName])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -199,7 +215,8 @@ const LeadModal = ({ isOpen, onClose, onSuccess }) => {
         gradeCode: formData.gradeCode,
         interestedSubjectIds: formData.interestedSubjectIds || [],
         notes: formData.notes.trim() || '',
-        branchId: formData.branchId
+        branchId: formData.branchId,
+        courseId: formData.courseId || null
       }
 
       await createLead(leadData)
@@ -211,18 +228,7 @@ const LeadModal = ({ isOpen, onClose, onSuccess }) => {
       onClose()
       
       // Reset form
-      setFormData({
-        lastName: '',
-        middleName: '',
-        firstName: '',
-        phone: '',
-        email: '',
-        branchId: '',
-        source: 'campaign', // Always default to campaign
-        gradeCode: '',
-        interestedSubjectIds: [],
-        notes: ''
-      })
+      setFormData(createInitialFormData())
     } catch (err) {
       const errorMsg = err.message || 'Có lỗi xảy ra khi tạo khách hàng. Vui lòng thử lại.'
       setError(errorMsg)
@@ -247,6 +253,31 @@ const LeadModal = ({ isOpen, onClose, onSuccess }) => {
         {error && (
           <div className="error-message" style={{ marginBottom: '20px' }}>
             <p>{error}</p>
+          </div>
+        )}
+
+        {(selectedCourseInfo.name || selectedCourseInfo.id) && (
+          <div
+            className="selected-course-info"
+            style={{
+              marginBottom: '20px',
+              padding: '15px',
+              backgroundColor: '#f5f5f5',
+              borderRadius: '8px',
+              border: '1px solid #e0e0e0'
+            }}
+          >
+            {selectedCourseInfo.name && (
+              <p style={{ margin: '0 0 6px', fontWeight: 600 }}>
+                Khóa học đăng ký: <span style={{ fontWeight: 500 }}>{selectedCourseInfo.name}</span>
+              </p>
+            )}
+            {selectedCourseInfo.branchName && (
+              <p style={{ margin: 0, fontSize: '0.95rem', color: '#555' }}>
+                Chi nhánh đề xuất: <span style={{ fontWeight: 500 }}>{selectedCourseInfo.branchName}</span>
+              </p>
+            )}
+       
           </div>
         )}
 

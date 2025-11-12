@@ -3,7 +3,7 @@ import { fetchCourses } from '../services/api'
 import { autoLogin, isAuthenticated } from '../services/auth'
 import TokenInput from './TokenInput'
 
-const CourseInfo = () => {
+const CourseInfo = ({ onRegisterCourse }) => {
   const [courses, setCourses] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -314,8 +314,79 @@ const CourseInfo = () => {
   }
 
   // Get course branch
+  const getCourseId = (course) => {
+    if (!course) return ''
+    return (
+      course.id ||
+      course._id ||
+      course.courseId ||
+      course.course_id ||
+      course.slug ||
+      ''
+    )
+  }
+
+  const getCourseBranchInfo = (course) => {
+    if (!course) {
+      return { id: '', name: '' }
+    }
+
+    if (course.branch && typeof course.branch === 'object') {
+      return {
+        id:
+          course.branch.id ||
+          course.branch._id ||
+          course.branch.branchId ||
+          course.branch.branch_id ||
+          course.branchId ||
+          '',
+        name:
+          course.branch.name ||
+          course.branch.branchName ||
+          course.branch.title ||
+          course.branch.label ||
+          ''
+      }
+    }
+
+    if (Array.isArray(course.branches) && course.branches.length > 0) {
+      const primaryBranch = course.branches[0]
+      if (typeof primaryBranch === 'string') {
+        return { id: course.branchId || '', name: primaryBranch }
+      }
+      if (primaryBranch && typeof primaryBranch === 'object') {
+        return {
+          id:
+            primaryBranch.id ||
+            primaryBranch._id ||
+            primaryBranch.branchId ||
+            primaryBranch.branch_id ||
+            '',
+          name:
+            primaryBranch.name ||
+            primaryBranch.branchName ||
+            primaryBranch.title ||
+            ''
+        }
+      }
+    }
+
+    return {
+      id:
+        course.branchId ||
+        course.branch_id ||
+        course.branchID ||
+        '',
+      name:
+        course.branchName ||
+        (typeof course.branch === 'string' ? course.branch : '') ||
+        ''
+    }
+  }
+
   const getCourseBranch = (course) => {
-    return course.branch || course.branchName || null
+    const branchInfo = getCourseBranchInfo(course)
+    return branchInfo.name || null
   }
 
   const getCourseTopics = (course) => {
@@ -624,11 +695,21 @@ const CourseInfo = () => {
                       className="btn-register-course"
                       disabled={course.status !== 'active'}
                       onClick={() => {
-                        // Chỉ cho phép scroll nếu course status là active
                         if (course.status !== 'active') {
                           return
                         }
-                        // Scroll to registration form or show modal
+
+                        if (typeof onRegisterCourse === 'function') {
+                          const branchInfo = getCourseBranchInfo(course)
+                          onRegisterCourse({
+                            branchId: branchInfo.id || '',
+                            branchName: branchInfo.name || '',
+                            courseId: getCourseId(course),
+                            courseName: getCourseTitle(course)
+                          })
+                          return
+                        }
+
                         const ctaSection = document.querySelector('.cta')
                         if (ctaSection) {
                           ctaSection.scrollIntoView({ behavior: 'smooth' })

@@ -1,23 +1,14 @@
-import React, { useState } from 'react'
-import LeadModal from './LeadModal'
+import React from 'react'
 
-const CTA = ({ status = 'active' }) => {
-  const [isModalOpen, setIsModalOpen] = useState(false)
-
+const CTA = ({ status = 'active', onRegisterClick }) => {
   const isActive = status === 'active'
 
   const handleOpenModal = () => {
     if (isActive) {
-      setIsModalOpen(true)
+      if (typeof onRegisterClick === 'function') {
+        onRegisterClick()
+      }
     }
-  }
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false)
-  }
-
-  const handleSuccess = () => {
-    alert('Đăng ký thành công! Chúng tôi sẽ liên hệ với bạn sớm nhất.')
   }
 
   return (
@@ -52,11 +43,6 @@ const CTA = ({ status = 'active' }) => {
           </div>
         </div>
       </section>
-      <LeadModal 
-        isOpen={isModalOpen} 
-        onClose={handleCloseModal}
-        onSuccess={handleSuccess}
-      />
     </>
   )
 }
