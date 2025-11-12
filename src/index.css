@@ -658,6 +658,9 @@ p.result {
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .module-card::before {
@@ -744,7 +747,7 @@ p.result {
 }
 
 .course-action {
-  margin-top: 25px;
+  margin-top: auto;
   padding-top: 25px;
   border-top: 2px dashed #e0e0e0;
 }
