@@ -304,7 +304,7 @@ const CourseInfo = ({ onRegisterCourse }) => {
   const renderPrice = (course) => {
     const display = formatPrice(course)
     if (typeof display === 'string') {
-      return <Text strong className="course-price">{display}</Text>
+      return null
     }
 
     if (display?.type === 'multi-mode') {
