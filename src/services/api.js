@@ -2,7 +2,7 @@ import { getToken } from './auth'
 
 // API Configuration - Use relative URL to go through Vite proxy
 // This avoids CORS issues. The proxy in vite.config.js forwards /api to http://localhost:5000
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/tenant'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/landing'
 
 // Log the API URL being used (for debugging)
 console.log('API Base URL:', API_BASE_URL)
@@ -234,7 +234,7 @@ export const fetchBranches = async () => {
 export const createLead = async (leadData) => {
   try {
     // Use /api/tenant/leads endpoint
-    const url = '/api/tenant/leads/public'
+    const url = '/api/landing/public'
     console.log('Creating lead at:', url)
     
     const headers = getAuthHeaders()

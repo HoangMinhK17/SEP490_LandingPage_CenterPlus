@@ -1,49 +1,39 @@
 import React from 'react'
+import { Button, Card, Space, Typography } from 'antd'
+import { GiftOutlined } from '@ant-design/icons'
 
 const CTA = ({ status = 'active', onRegisterClick }) => {
   const isActive = status === 'active'
 
-  const handleOpenModal = () => {
-    if (isActive) {
-      if (typeof onRegisterClick === 'function') {
-        onRegisterClick()
-      }
-    }
-  }
-
   return (
-    <>
-      <section className="cta">
-        <div className="container">
-          <div className="cta-content">
-            <h2 className="cta-title">Sẵn Sàng Bắt Đầu Hành Trình Của Bạn?</h2>
-            <p className="cta-subtitle">
-              Đăng ký ngay hôm nay để nhận ưu đãi đặc biệt và tư vấn miễn phí về khóa học
-            </p>
-            <div className="registration-form">
-              <button 
-                type="button" 
-                className="btn btn-primary btn-large"
-                onClick={handleOpenModal}
-                disabled={!isActive}
-                style={{
-                  opacity: isActive ? 1 : 0.6,
-                  cursor: isActive ? 'pointer' : 'not-allowed',
-                  width: '100%',
-                  padding: '15px',
-                  fontSize: '1.1rem'
-                }}
-              >
-                Đăng Ký Ngay - Nhận Ưu Đãi 30%
-              </button>
-            </div>
-            <p className="cta-note">
-              * Chúng tôi cam kết bảo mật thông tin của bạn
-            </p>
-          </div>
-        </div>
-      </section>
-    </>
+    <section className="cta-section" id="cta-section">
+      <div className="section-container">
+        <Card bordered={false} className="cta-card">
+          <Space direction="vertical" size="large" style={{ width: '100%' }} align="center">
+            <GiftOutlined className="cta-icon" />
+            <Space direction="vertical" size="small" align="center">
+              <Typography.Title level={2} style={{ textAlign: 'center', color: '#fff' }}>
+                Đăng ký ngay – Nhận ưu đãi đến 30%
+              </Typography.Title>
+              <Typography.Paragraph style={{ textAlign: 'center', color: 'rgba(255,255,255,0.85)' }}>
+                Tư vấn lộ trình miễn phí, kiểm tra trình độ đầu vào và nhận lịch học phù hợp với bạn.
+              </Typography.Paragraph>
+            </Space>
+            <Button
+              type="primary"
+              size="large"
+              onClick={() => isActive && onRegisterClick?.()}
+              disabled={!isActive}
+            >
+              Đặt lịch tư vấn miễn phí
+            </Button>
+            <Typography.Text style={{ color: 'rgba(255,255,255,0.7)' }}>
+              Thông tin của bạn được bảo mật tuyệt đối bởi CenterPlus.
+            </Typography.Text>
+          </Space>
+        </Card>
+      </div>
+    </section>
   )
 }
 

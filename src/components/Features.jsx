@@ -1,52 +1,81 @@
 import React from 'react'
+import { Typography, Row, Col, Card, Space } from 'antd'
+import {
+  TeamOutlined,
+  ReadOutlined,
+  AimOutlined,
+  BarChartOutlined,
+  TrophyOutlined,
+  MessageOutlined
+} from '@ant-design/icons'
+
+const features = [
+  {
+    icon: <TeamOutlined />,
+    title: 'Giáo viên nhiều kinh nghiệm',
+    description: 'Giảng viên xuất sắc, chuyên môn cao, tận tâm đồng hành cùng từng học viên.'
+  },
+  {
+    icon: <ReadOutlined />,
+    title: 'Giáo trình cập nhật',
+    description: 'Nội dung bám sát chương trình chính khóa và đề thi thật, cập nhật liên tục.'
+  },
+  {
+    icon: <AimOutlined />,
+    title: 'Lộ trình cá nhân hoá',
+    description: 'Thiết kế giáo án phù hợp với năng lực, mục tiêu để học viên tiến bộ bền vững.'
+  },
+  {
+    icon: <BarChartOutlined />,
+    title: 'Theo dõi sát sao',
+    description: 'Báo cáo kết quả hàng tuần, điều chỉnh phương pháp ngay khi có dấu hiệu chững lại.'
+  },
+  {
+    icon: <TrophyOutlined />,
+    title: 'Luyện thi chuyên sâu',
+    description: 'Bộ đề chuẩn, chiến lược làm bài tối ưu cho mọi kỳ thi quan trọng.'
+  },
+  {
+    icon: <MessageOutlined />,
+    title: 'Hỗ trợ đa kênh 24/7',
+    description: 'Giải đáp nhanh chóng qua Zalo, Facebook, hotline – bất cứ khi nào bạn cần.'
+  }
+]
 
 const Features = () => {
-  const features = [
-    {
-      icon: '👨‍🏫',
-      title: 'Giáo Viên Giàu Kinh Nghiệm',
-      description: 'Đội ngũ giáo viên chuyên nghiệp, nhiều năm kinh nghiệm giảng dạy, tận tâm với học viên'
-    },
-    {
-      icon: '📖',
-      title: 'Chương Trình Học Chất Lượng',
-      description: 'Giáo trình được biên soạn kỹ lưỡng, bám sát chương trình học và đề thi thực tế'
-    },
-    {
-      icon: '🎯',
-      title: 'Phương Pháp Học Hiệu Quả',
-      description: 'Học từ cơ bản đến nâng cao, luyện tập bài tập đa dạng, củng cố kiến thức vững chắc'
-    },
-    {
-      icon: '📊',
-      title: 'Theo Dõi Tiến Độ Thường Xuyên',
-      description: 'Đánh giá và báo cáo tiến độ học tập định kỳ, điều chỉnh phương pháp phù hợp với từng học viên'
-    },
-    {
-      icon: '🏆',
-      title: 'Luyện Thi Chuyên Sâu',
-      description: 'Ôn luyện các kỳ thi quan trọng: thi học kỳ, thi tốt nghiệp, thi đại học với đề thi sát thực tế'
-    },
-    {
-      icon: '💬',
-      title: 'Hỗ Trợ 24/7',
-      description: 'Giáo viên luôn sẵn sàng giải đáp thắc mắc, hỗ trợ học viên mọi lúc mọi nơi'
-    }
-  ]
-
   return (
-    <section className="features">
-      <div className="container">
-        <h2 className="section-title">Tại Sao Chọn Trung Tâm Chúng Tôi?</h2>
-        <div className="features-grid">
-          {features.map((feature, index) => (
-            <div key={index} className="feature-card">
-              <div className="feature-icon">{feature.icon}</div>
-              <h3 className="feature-title">{feature.title}</h3>
-              <p className="feature-description">{feature.description}</p>
-            </div>
-          ))}
-        </div>
+    <section className="page-section features-section">
+      <div className="section-container">
+        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+          <div className="section-heading">
+            <Typography.Title level={2}>
+              Tại sao phụ huynh lựa chọn CenterPlus?
+            </Typography.Title>
+            <Typography.Paragraph type="secondary">
+              Trải nghiệm học tập toàn diện với đội ngũ giáo viên tận tâm, nội dung hiện đại và hệ thống đánh giá liên tục.
+            </Typography.Paragraph>
+          </div>
+
+          <Row gutter={[24, 24]}>
+            {features.map((feature) => (
+              <Col xs={24} sm={12} md={8} key={feature.title}>
+                <Card bordered={false} className="feature-card">
+                  <Space direction="vertical" size="middle">
+                    <div className="feature-icon-wrapper">
+                      {feature.icon}
+                    </div>
+                    <Typography.Title level={4} className="feature-title">
+                      {feature.title}
+                    </Typography.Title>
+                    <Typography.Paragraph type="secondary">
+                      {feature.description}
+                    </Typography.Paragraph>
+                  </Space>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+        </Space>
       </div>
     </section>
   )
