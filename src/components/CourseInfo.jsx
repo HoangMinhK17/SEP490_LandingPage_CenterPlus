@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import { fetchCourses } from '../services/api'
-import { autoLogin, isAuthenticated } from '../services/auth'
-import TokenInput from './TokenInput'
+
 
 const CourseInfo = ({ onRegisterCourse }) => {
   const [courses, setCourses] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [showTokenInput, setShowTokenInput] = useState(false)
+  // const [showTokenInput, setShowTokenInput] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedBranch, setSelectedBranch] = useState('all')
 
@@ -36,9 +35,9 @@ const CourseInfo = ({ onRegisterCourse }) => {
       const errorMessage = err.message || 'Không thể tải danh sách khóa học'
       
       // If authentication error, always show token input (token might be expired)
-      if (errorMessage.includes('Token') || errorMessage.includes('401') || errorMessage.includes('403') || errorMessage.includes('hết hạn')) {
-        setShowTokenInput(true)
-      }
+      // if (errorMessage.includes('Token') || errorMessage.includes('401') || errorMessage.includes('403') || errorMessage.includes('hết hạn')) {
+      //   setShowTokenInput(true)
+      // }
       
       setError(errorMessage)
     } finally {
@@ -49,12 +48,12 @@ const CourseInfo = ({ onRegisterCourse }) => {
   useEffect(() => {
     const initialize = async () => {
       // Try auto login first
-      const autoLoginSuccess = await autoLogin()
+      // const autoLoginSuccess = await autoLogin()
       
-      // If auto login failed and no token exists, show token input
-      if (!autoLoginSuccess && !isAuthenticated()) {
-        setShowTokenInput(true)
-      }
+      // // If auto login failed and no token exists, show token input
+      // if (!autoLoginSuccess && !isAuthenticated()) {
+      //   setShowTokenInput(true)
+      // }
       
       // Load courses
       await loadCourses()
@@ -63,19 +62,19 @@ const CourseInfo = ({ onRegisterCourse }) => {
     initialize()
   }, [])
 
-  const handleTokenSet = () => {
-    // Hide token input and reload courses when token is set
-    setShowTokenInput(false)
-    setError(null) // Clear error when token is updated
-    loadCourses()
-  }
+  // const handleTokenSet = () => {
+  //   // Hide token input and reload courses when token is set
+  //   setShowTokenInput(false)
+  //   setError(null) // Clear error when token is updated
+  //   loadCourses()
+  // }
 
-  const handleTokenInputClose = () => {
-    // Only allow closing if there's no authentication error
-    if (!error || (!error.includes('Token') && !error.includes('401') && !error.includes('403'))) {
-      setShowTokenInput(false)
-    }
-  }
+  // const handleTokenInputClose = () => {
+  //   // Only allow closing if there's no authentication error
+  //   if (!error || (!error.includes('Token') && !error.includes('401') && !error.includes('403'))) {
+  //     setShowTokenInput(false)
+  //   }
+  // }
 
 
 
@@ -438,13 +437,13 @@ const CourseInfo = ({ onRegisterCourse }) => {
   if (loading) {
     return (
       <>
-        {showTokenInput && (
+        {/* {showTokenInput && (
           <TokenInput 
             onTokenSet={handleTokenSet}
             onClose={handleTokenInputClose}
             error={error && (error.includes('Token') || error.includes('401') || error.includes('403')) ? error : null}
           />
-        )}
+        )} */}
         <section className="course-info">
           <div className="container">
             <div className="section-header">
@@ -462,13 +461,13 @@ const CourseInfo = ({ onRegisterCourse }) => {
 
   return (
     <>
-      {showTokenInput && (
+      {/* {showTokenInput && (
         <TokenInput 
           onTokenSet={handleTokenSet}
           onClose={handleTokenInputClose}
           error={error && (error.includes('Token') || error.includes('401') || error.includes('403')) ? error : null}
         />
-      )}
+      )} */}
       <section className="course-info">
         <div className="container">
           <div className="section-header">
