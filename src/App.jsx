@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
+import { Layout, FloatButton } from 'antd'
+import { PhoneFilled } from '@ant-design/icons'
 import './index.css'
 import Hero from './components/Hero'
 import Features from './components/Features'
@@ -8,8 +10,10 @@ import CTA from './components/CTA'
 import Footer from './components/Footer'
 import LeadModal from './components/LeadModal'
 
+const { Content } = Layout
+
 function App() {
-  const [status, setStatus] = useState('active') // Default là 'active'
+  const [status] = useState('active')
   const [isLeadModalOpen, setIsLeadModalOpen] = useState(false)
   const [leadModalDefaults, setLeadModalDefaults] = useState({
     branchId: '',
@@ -17,12 +21,6 @@ function App() {
     courseId: '',
     courseName: ''
   })
-
-  // Có thể fetch status từ API nếu cần
-  useEffect(() => {
-    // Nếu cần lấy status từ API, có thể thêm logic ở đây
-    // Ví dụ: fetchStatusFromAPI().then(setStatus)
-  }, [])
 
   const handleOpenLeadModal = (config = {}) => {
     setLeadModalDefaults({
@@ -38,34 +36,32 @@ function App() {
     setIsLeadModalOpen(false)
   }
 
-  const handleLeadSuccess = () => {
-    alert('Đăng ký thành công! Chúng tôi sẽ liên hệ với bạn sớm nhất.')
-  }
-
   return (
-    <div className="landing-page">
-      <Hero />
-      <Features />
-      <CourseInfo
-        status={status}
-        onRegisterCourse={handleOpenLeadModal}
-      />
-      <Testimonials />
-      <CTA
-        status={status}
-        onRegisterClick={handleOpenLeadModal}
-      />
+    <Layout className="landing-layout">
+      <Content>
+        <Hero onRegisterClick={() => handleOpenLeadModal()} />
+        <Features />
+        <CourseInfo onRegisterCourse={handleOpenLeadModal} />
+        <Testimonials />
+        <CTA status={status} onRegisterClick={handleOpenLeadModal} />
+      </Content>
       <Footer />
+      <FloatButton.BackTop visibilityHeight={400} />
+      <FloatButton
+        icon={<PhoneFilled />}
+        tooltip="Liên hệ tư vấn"
+        onClick={() => window.open('tel:19001234')}
+      />
       <LeadModal
         isOpen={isLeadModalOpen}
         onClose={handleCloseLeadModal}
-        onSuccess={handleLeadSuccess}
+        onSuccess={() => null}
         defaultBranchId={leadModalDefaults.branchId}
         defaultBranchName={leadModalDefaults.branchName}
         defaultCourseId={leadModalDefaults.courseId}
         defaultCourseName={leadModalDefaults.courseName}
       />
-    </div>
+    </Layout>
   )
 }
 

@@ -1,98 +1,116 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
+import {
+  Alert,
+  Form,
+  Input,
+  Modal,
+  Space,
+  Typography,
+  message
+} from 'antd'
+import { UserOutlined, LockOutlined } from '@ant-design/icons'
 import { login } from '../services/auth'
 
 const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
-  const [formData, setFormData] = useState({
-    username: '',
-    password: ''
-  })
+  const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  if (!isOpen) return null
+  useEffect(() => {
+    if (!isOpen) return
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    })
     setError(null)
+    form.resetFields()
+  }, [isOpen, form])
+
+  const handleClose = () => {
+    if (loading) return
+
+    form.resetFields()
+    setError(null)
+    onClose?.()
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
-
+  const handleSubmit = async () => {
     try {
-      await login(formData.username, formData.password)
-      onLoginSuccess()
-      onClose()
-      setFormData({ username: '', password: '' })
+      const values = await form.validateFields()
+      setLoading(true)
+      setError(null)
+
+      await login(values.username.trim(), values.password)
+      message.success('Đăng nhập thành công!')
+      onLoginSuccess?.()
+      handleClose()
     } catch (err) {
-      setError(err.message || 'Đăng nhập thất bại. Vui lòng thử lại.')
-      console.error('Login error:', err)
+      if (err?.errorFields) {
+        setError('Vui lòng kiểm tra lại tên đăng nhập và mật khẩu.')
+        return
+      }
+
+      const errorMessage = err?.message || 'Đăng nhập thất bại. Vui lòng thử lại.'
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h2>Đăng Nhập</h2>
-        <p style={{ marginBottom: '20px', color: '#666' }}>
-          Vui lòng đăng nhập để xem danh sách khóa học
-        </p>
-        
+    <Modal
+      open={isOpen}
+      onCancel={handleClose}
+      onOk={handleSubmit}
+      okText={loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+      cancelText="Huỷ"
+      confirmLoading={loading}
+      title="Đăng nhập"
+      centered
+      destroyOnClose
+    >
+      <Space direction="vertical" size="large" style={{ width: '100%' }}>
+        <Typography.Paragraph type="secondary" style={{ marginBottom: 0 }}>
+          Vui lòng đăng nhập để xem danh sách khóa học.
+        </Typography.Paragraph>
+
         {error && (
-          <div className="error-message" style={{ marginBottom: '20px' }}>
-            <p>{error}</p>
-          </div>
+          <Alert
+            type="error"
+            message={error}
+            showIcon
+          />
         )}
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <input
-              type="text"
-              name="username"
-              placeholder="Tên đăng nhập hoặc Email *"
-              value={formData.username}
-              onChange={handleChange}
-              required
-              disabled={loading}
-            />
-          </div>
-          <div className="form-group">
-            <input
-              type="password"
-              name="password"
-              placeholder="Mật khẩu *"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              disabled={loading}
-            />
-          </div>
-          <button 
-            type="submit" 
-            className="btn btn-primary btn-large"
-            disabled={loading}
-          >
-            {loading ? 'Đang đăng nhập...' : 'Đăng Nhập'}
-          </button>
-        </form>
-
-        <button 
-          className="btn btn-secondary" 
-          onClick={onClose}
-          style={{ marginTop: '10px', width: '100%' }}
+        <Form
+          form={form}
+          layout="vertical"
+          initialValues={{ username: '', password: '' }}
           disabled={loading}
         >
-          Hủy
-        </button>
-      </div>
-    </div>
+          <Form.Item
+            label="Tên đăng nhập hoặc Email"
+            name="username"
+            rules={[{ required: true, message: 'Vui lòng nhập tên đăng nhập hoặc email' }]}
+          >
+            <Input
+              prefix={<UserOutlined />}
+              placeholder="Tên đăng nhập hoặc Email"
+              autoComplete="username"
+            />
+          </Form.Item>
+
+          <Form.Item
+            label="Mật khẩu"
+            name="password"
+            rules={[{ required: true, message: 'Vui lòng nhập mật khẩu' }]}
+          >
+            <Input.Password
+              prefix={<LockOutlined />}
+              placeholder="Mật khẩu"
+              autoComplete="current-password"
+            />
+          </Form.Item>
+        </Form>
+      </Space>
+    </Modal>
   )
 }
 

@@ -1,127 +1,93 @@
-import React, { useState, useEffect } from 'react'
+import React, { useMemo } from 'react'
+import { Button, Typography, Row, Col, Card, Statistic, Space, Carousel } from 'antd'
+import { ArrowRightOutlined, PlayCircleOutlined } from '@ant-design/icons'
 
-const Hero = () => {
-  // Danh sách các hình ảnh về môn học/dạy học
-  // Thêm các hình ảnh vào thư mục public và cập nhật đường dẫn ở đây
-  const backgroundImages = [
-    '/1.jpg', '/center.svg', '/3.jpg' // Hình ảnh hiện có
-    // Thêm các hình ảnh khác vào đây, ví dụ:
-    // '/hero-math.jpg',
-    // '/hero-english.jpg',
-    // '/hero-physics.jpg',
-    // '/hero-teaching.jpg',
-  ]
+const slideSources = ['/1.jpg', '/center.svg', '/3.jpg']
 
-  // Nếu chỉ có 1 hình ảnh, thêm các gradient backup để có slideshow
-  const allBackgrounds = backgroundImages.length > 1 
-    ? backgroundImages 
-    : [
-        ...backgroundImages,
-        'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-        'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-      ]
+const stats = [
+  { value: '5000+', label: 'Học viên đã tham gia' },
+  { value: '4.9/5', label: 'Đánh giá trung bình' },
+  { value: '98%', label: 'Học viên đạt điểm cao' }
+]
 
-  const [currentIndex, setCurrentIndex] = useState(0)
+const Hero = ({ onRegisterClick }) => {
+  const slides = useMemo(() => {
+    const base = import.meta.env.BASE_URL ?? '/'
+    const normalizedBase = base.endsWith('/') ? base.slice(0, -1) : base
 
-  useEffect(() => {
-    // Tự động chuyển đổi background mỗi 5 giây
-    const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) => 
-        (prevIndex + 1) % allBackgrounds.length
-      )
-    }, 5000)
-
-    return () => clearInterval(interval)
-  }, [allBackgrounds.length])
+    return slideSources.map((path) => {
+      const normalizedPath = path.startsWith('/') ? path : `/${path}`
+      if (!normalizedBase) return normalizedPath
+      return `${normalizedBase}${normalizedPath}`
+    })
+  }, [])
 
   const handleScrollToCourses = () => {
-    const courseSection = document.querySelector('.course-info')
+    const courseSection = document.getElementById('course-section')
     if (courseSection) {
-      courseSection.scrollIntoView({ behavior: 'smooth' })
+      courseSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
   }
 
   const handleScrollToRegister = () => {
-    const ctaSection = document.querySelector('.cta')
+    if (typeof onRegisterClick === 'function') {
+      onRegisterClick()
+      return
+    }
+
+    const ctaSection = document.getElementById('cta-section')
     if (ctaSection) {
-      ctaSection.scrollIntoView({ behavior: 'smooth' })
+      ctaSection.scrollIntoView({ behavior: 'smooth', block: 'center' })
     }
   }
 
   return (
-    <section className="hero">
-      {/* Background slideshow */}
-      <div className="hero-background-container">
-        {allBackgrounds.map((bg, index) => {
-          const isImage = bg.startsWith('/') || bg.startsWith('http')
-          return (
-            <div
-              key={index}
-              className={`hero-background-slide ${index === currentIndex ? 'active' : ''}`}
-              style={
-                isImage
-                  ? {
-                      backgroundImage: `url(${bg})`,
-                    }
-                  : {
-                      background: bg,
-                    }
-              }
-            />
-          )
-        })}
-      </div>
-      
-      {/* Overlay để chữ dễ đọc hơn */}
-      <div className="hero-overlay"></div>
-      
-      <div className="hero-content">
-       
-        <h1 className="hero-title">
-          CenterPlus - Trung tâm dạy thêm
-        </h1>
-        <p className="hero-subtitle">
-          Khám phá các khóa học chất lượng cao với đội ngũ giáo viên giàu kinh nghiệm. 
-          Học tập hiệu quả, tiến bộ nhanh chóng, đạt kết quả cao trong học tập và thi cử.
-        </p>
-        <div className="hero-buttons">
-          <button className="btn btn-primary" onClick={handleScrollToRegister}>
-            Đăng Ký Ngay
-          </button>
-          <button className="btn btn-secondary" onClick={handleScrollToCourses}>
-            Xem Các Khóa Học
-          </button>
-        </div>
-        <div className="hero-stats">
-          <div className="stat">
-            <span className="stat-number">5000+</span>
-            <span className="stat-label">Học viên đã tham gia</span>
-          </div>
-          <div className="stat">
-            <span className="stat-number">4.9/5</span>
-            <span className="stat-label">Đánh giá trung bình</span>
-          </div>
-          <div className="stat">
-            <span className="stat-number">98%</span>
-            <span className="stat-label">Học viên đạt điểm cao</span>
-          </div>
-        </div>
-      </div>
-      
-      {/* Dots indicator */}
-      {allBackgrounds.length > 1 && (
-        <div className="hero-slideshow-dots">
-          {allBackgrounds.map((_, index) => (
-            <button
-              key={index}
-              className={`hero-dot ${index === currentIndex ? 'active' : ''}`}
-              onClick={() => setCurrentIndex(index)}
-              aria-label={`Chuyển đến slide ${index + 1}`}
-            />
+    <section className="hero-section">
+      <div className="hero-background">
+        <Carousel autoplay effect="fade" dots className="hero-carousel">
+          {slides.map((slide, index) => (
+            <div className="hero-slide" key={index}>
+              <img className="hero-slide-image" src={slide} alt={`Slide ${index + 1}`} />
+            </div>
           ))}
-        </div>
-      )}
+        </Carousel>
+        <div className="hero-overlay" />
+      </div>
+
+      <div className="hero-content">
+        <Space direction="vertical" size="large">
+          <Typography.Title level={1} className="hero-title">
+            CenterPlus - Trung Tâm Luyện Thi & Bồi Dưỡng Kiến Thức
+          </Typography.Title>
+          <Typography.Paragraph className="hero-subtitle">
+            Khám phá các khóa học chất lượng cao cùng đội ngũ giáo viên giàu kinh nghiệm. 
+            Cá nhân hoá lộ trình học tập, theo sát tiến độ để bạn bứt phá trong mọi kỳ thi quan trọng.
+          </Typography.Paragraph>
+
+          <Space size="middle" wrap>
+            <Button type="primary" size="large" icon={<ArrowRightOutlined />} onClick={handleScrollToRegister}>
+              Đăng ký tư vấn miễn phí
+            </Button>
+            <Button size="large" ghost icon={<PlayCircleOutlined />} onClick={handleScrollToCourses}>
+              Xem danh sách khóa học
+            </Button>
+          </Space>
+
+          <Row gutter={[16, 16]}>
+            {stats.map((stat) => (
+              <Col xs={24} sm={8} key={stat.label}>
+                <Card bordered={false} className="hero-stat-card">
+                  <Statistic
+                    title={stat.label}
+                    value={stat.value}
+                    valueStyle={{ color: '#ffffff', fontWeight: 600 }}
+                  />
+                </Card>
+              </Col>
+            ))}
+          </Row>
+        </Space>
+      </div>
     </section>
   )
 }

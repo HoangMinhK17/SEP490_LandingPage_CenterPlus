@@ -1,197 +1,173 @@
-import React, { useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
+import {
+  Alert,
+  Button,
+  FloatButton,
+  Form,
+  Input,
+  Modal,
+  Space,
+  Typography,
+  message
+} from 'antd'
+import { KeyOutlined, ReloadOutlined, SaveOutlined, CloseOutlined } from '@ant-design/icons'
 import { saveToken, getToken } from '../services/auth'
 
 const TokenInput = ({ onTokenSet, onClose, error }) => {
-  const [token, setToken] = useState(getToken() || '')
-  const [isVisible, setIsVisible] = useState(!getToken())
-  const [showInput, setShowInput] = useState(false)
-  
-  // Force show input if there's an error
-  const shouldShowInput = error || !getToken() || showInput
+  const [form] = Form.useForm()
+  const storedToken = useMemo(() => getToken() || '', [])
+  const [isModalOpen, setIsModalOpen] = useState(!storedToken)
+  const [isSaving, setIsSaving] = useState(false)
 
-  const handleSave = () => {
-    if (!token || !token.trim()) {
-      alert('Vui lòng nhập token!')
-      return
+  useEffect(() => {
+    if (error) {
+      setIsModalOpen(true)
     }
-    
+  }, [error])
+
+  useEffect(() => {
+    if (isModalOpen) {
+      form.setFieldsValue({ token: getToken() || '' })
+    }
+  }, [isModalOpen, form])
+
+  const handleOpen = () => {
+    setIsModalOpen(true)
+  }
+
+  const handleClose = () => {
+    if (isSaving) return
+
+    setIsModalOpen(false)
+    form.resetFields()
+    onClose?.()
+  }
+
+  const handleSave = async () => {
     try {
-      saveToken(token.trim())
-      setIsVisible(false)
-      setShowInput(false)
-      if (onTokenSet) {
-        onTokenSet()
+      const { token } = await form.validateFields()
+      const trimmedToken = token.trim()
+      if (!trimmedToken) {
+        message.error('Vui lòng nhập token hợp lệ.')
+        return
       }
-      alert('Token đã được lưu thành công!')
-    } catch (error) {
-      alert(`Lỗi: ${error.message || 'Không thể lưu token. Vui lòng thử lại.'}`)
-      console.error('Error saving token:', error)
+
+      setIsSaving(true)
+      saveToken(trimmedToken)
+      message.success(error ? 'Token đã được cập nhật.' : 'Token đã được lưu thành công.')
+      onTokenSet?.()
+      handleClose()
+    } catch (err) {
+      if (!err?.errorFields) {
+        const errorMessage = err?.message || 'Không thể lưu token. Vui lòng thử lại.'
+        message.error(errorMessage)
+      }
+    } finally {
+      setIsSaving(false)
     }
   }
 
   const handleClear = () => {
     saveToken('')
-    setToken('')
-    setShowInput(true)
+    form.setFieldsValue({ token: '' })
+    message.success('Đã xoá token.')
+    setIsModalOpen(true)
+    onTokenSet?.()
   }
 
-  // If there's an error, always show the input form (not the button)
-  if (!shouldShowInput && !error) {
-    return (
-      <div style={{ 
-        position: 'fixed', 
-        top: '10px', 
-        right: '10px', 
-        zIndex: 1000,
-        background: '#f8f9fa',
-        padding: '10px',
-        borderRadius: '8px',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
-      }}>
-        <button 
-          onClick={() => setShowInput(true)}
-          className="btn btn-secondary"
-          style={{ fontSize: '0.9rem', padding: '8px 15px' }}
-        >
-          Cập nhật Token
-        </button>
-      </div>
-    )
-  }
+  const showFloatButton = !error && !isModalOpen && !!getToken()
 
   return (
     <>
-      {/* Backdrop */}
-      <div 
-        style={{ 
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.5)',
-          zIndex: 9999
-        }}
-        onClick={error ? undefined : (onClose || (() => setShowInput(false)))}
-      />
-      
-      {/* Modal */}
-      <div style={{ 
-        position: 'fixed', 
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        zIndex: 10000,
-        background: 'white',
-        padding: '30px',
-        borderRadius: '12px',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-        minWidth: '400px',
-        maxWidth: '500px',
-        border: error ? '2px solid #f44336' : 'none'
-      }}>
-      <h3 style={{ 
-        marginBottom: '15px', 
-        fontSize: '1.2rem',
-        color: error ? '#f44336' : '#333'
-      }}>
-        {error ? '⚠️ Token không hợp lệ' : 'Nhập API Token'}
-      </h3>
-      
-      {error && (
-        <div style={{
-          padding: '12px',
-          background: '#ffebee',
-          borderRadius: '6px',
-          marginBottom: '15px',
-          border: '1px solid #f44336'
-        }}>
-          <p style={{ fontSize: '0.9rem', color: '#c62828', margin: 0 }}>
-            {error}
-          </p>
-          <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '8px', marginBottom: 0 }}>
-            Vui lòng nhập token mới từ server API để tiếp tục.
-          </p>
-        </div>
-      )}
-      
-      {!error && (
-        <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '15px' }}>
-          Vui lòng nhập token từ server API để xem danh sách khóa học
-        </p>
-      )}
-      
-      <div className="form-group">
-        <label style={{ 
-          display: 'block', 
-          marginBottom: '8px', 
-          fontSize: '0.9rem',
-          fontWeight: 'bold',
-          color: '#333'
-        }}>
-          API Token:
-        </label>
-        <input
-          type="text"
-          value={token}
-          onChange={(e) => setToken(e.target.value)}
-          placeholder="Nhập API token của bạn"
-          style={{ 
-            width: '100%', 
-            padding: '12px', 
-            marginBottom: '10px',
-            border: '1px solid #ddd',
-            borderRadius: '6px',
-            fontSize: '0.95rem'
-          }}
-          autoFocus
+      {showFloatButton && (
+        <FloatButton
+          tooltip="Cập nhật API Token"
+          icon={<KeyOutlined />}
+          onClick={handleOpen}
+          style={{ right: 24, top: 96 }}
         />
-      </div>
-      
-      <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-        <button 
-          onClick={handleSave}
-          className="btn btn-primary"
-          style={{ flex: 1, padding: '12px', fontSize: '1rem' }}
-        >
-          {error ? 'Cập nhật Token' : 'Lưu Token'}
-        </button>
-        {getToken() && !error && (
-          <button 
-            onClick={handleClear}
-            className="btn btn-secondary"
-            style={{ padding: '12px' }}
+      )}
+
+      <Modal
+        open={isModalOpen}
+        onCancel={handleClose}
+        title={error ? 'Token không hợp lệ' : 'Thiết lập API Token'}
+        okText={isSaving ? 'Đang lưu...' : 'Lưu token'}
+        cancelText="Huỷ"
+        onOk={handleSave}
+        confirmLoading={isSaving}
+        centered
+        destroyOnClose
+        width={520}
+      >
+        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+          {error ? (
+            <Alert
+              type="error"
+              showIcon
+              message={error}
+              description="Vui lòng nhập token mới từ máy chủ API để tiếp tục."
+            />
+          ) : (
+            <Typography.Paragraph type="secondary" style={{ marginBottom: 0 }}>
+              Vui lòng nhập token từ máy chủ API để đồng bộ dữ liệu khóa học.
+            </Typography.Paragraph>
+          )}
+
+          <Form
+            form={form}
+            layout="vertical"
+            initialValues={{ token: storedToken }}
+            disabled={isSaving}
           >
-            Xóa
-          </button>
-        )}
-        {!error && onClose && (
-          <button 
-            onClick={onClose}
-            className="btn btn-secondary"
-            style={{ padding: '12px' }}
+            <Form.Item
+              label="API Token"
+              name="token"
+              rules={[{ required: true, message: 'Token không được để trống' }]}
+            >
+              <Input.TextArea
+                rows={3}
+                placeholder="Nhập API token của bạn"
+                autoSize={{ minRows: 3, maxRows: 6 }}
+              />
+            </Form.Item>
+          </Form>
+
+          <Space
+            size="middle"
+            wrap
+            style={{ width: '100%', justifyContent: 'flex-end' }}
           >
-            Đóng
-          </button>
-        )}
-      </div>
-      
-      <div style={{ 
-        marginTop: '15px', 
-        padding: '10px',
-        background: '#f5f5f5',
-        borderRadius: '6px',
-        fontSize: '0.85rem',
-        color: '#666'
-      }}>
-        <strong>Hướng dẫn:</strong>
-        <ul style={{ margin: '8px 0 0 20px', padding: 0 }}>
-          <li>Lấy token từ API server của bạn</li>
-          <li>Token thường có dạng: Bearer token hoặc JWT token</li>
-          <li>Paste token vào ô trên và click "Lưu Token"</li>
-        </ul>
-      </div>
-    </div>
+            <Button
+              icon={<CloseOutlined />}
+              onClick={handleClose}
+              disabled={isSaving}
+            >
+              Đóng
+            </Button>
+            <Button
+              danger
+              icon={<ReloadOutlined />}
+              onClick={handleClear}
+              disabled={isSaving || !getToken()}
+            >
+              Xoá token
+            </Button>
+            <Button
+              type="primary"
+              icon={<SaveOutlined />}
+              loading={isSaving}
+              onClick={handleSave}
+            >
+              Lưu token
+            </Button>
+          </Space>
+
+          <Typography.Paragraph type="secondary" style={{ fontSize: '0.9rem', marginBottom: 0 }}>
+            Token thường có dạng chuỗi JWT hoặc Bearer. Sao chép chính xác từ hệ thống quản trị để đảm bảo kết nối thành công.
+          </Typography.Paragraph>
+        </Space>
+      </Modal>
     </>
   )
 }
