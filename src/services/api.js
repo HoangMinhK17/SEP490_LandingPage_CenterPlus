@@ -1,8 +1,9 @@
+import axios from 'axios'
 import { getToken } from './auth'
 
 // API Configuration - Use relative URL to go through Vite proxy
 // This avoids CORS issues. The proxy in vite.config.js forwards /api to http://localhost:5000
-const API_BASE_URL = 'https://api.codemy.id.vn/api/landing'
+const API_BASE_URL = 'https://api.codemy.id.vn/'
 
 // Log the API URL being used (for debugging)
 console.log('API Base URL:', API_BASE_URL)
@@ -233,34 +234,44 @@ export const fetchBranches = async () => {
  */
 export const createLead = async (leadData) => {
   try {
-    // Use /api/tenant/leads endpoint
     const url = '/api/landing/public'
     console.log('Creating lead at:', url)
-    
-    const response = await fetch(url, {
-      method: 'POST',
-      credentials: 'same-origin',
-      body: JSON.stringify(leadData)
+
+    const headers = Object.fromEntries(getAuthHeaders().entries())
+
+    const response = await axios.post(url, leadData, {
+      headers,
+      withCredentials: true
     })
 
-    if (response.status === 401 || response.status === 403) {
-      const errorText = await response.text()
-      console.error('Authentication failed:', errorText)
-      throw new Error('Token không hợp lệ hoặc đã hết hạn. Vui lòng cập nhật token.')
-    }
+    console.log('Lead created successfully:', response.data)
+    return response.data
+  } catch (error) {
+    if (error.response) {
+      const { status, statusText, data } = error.response
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: response.statusText }))
-      const errorMessage = errorData.message || errorData.error || `HTTP ${response.status}: ${response.statusText}`
+      if (status === 401 || status === 403) {
+        const errorText = data?.message || data?.error || statusText
+        console.error('Authentication failed:', errorText)
+        throw new Error('Token không hợp lệ hoặc đã hết hạn. Vui lòng cập nhật token.')
+      }
+
+      const errorMessage =
+        data?.message ||
+        data?.error ||
+        data?.errors?.[0]?.message ||
+        `HTTP ${status}: ${statusText}`
+
       console.error('API Error Response:', errorMessage)
       throw new Error(errorMessage)
     }
 
-    const data = await response.json()
-    console.log('Lead created successfully:', data)
-    return data
-  } catch (error) {
+    if (error.request) {
+      console.error('No response received when creating lead:', error.request)
+      throw new Error('Không nhận được phản hồi từ máy chủ. Vui lòng thử lại sau.')
+    }
+
     console.error('Error creating lead:', error)
-    throw error
+    throw new Error(error.message || 'Không thể tạo lead. Vui lòng thử lại.')
   }
 }
