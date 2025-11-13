@@ -54,63 +54,33 @@ const getAuthHeaders = () => {
  * @returns {Promise<Array>} Array of course objects
  */
 export const fetchCourses = async () => {
-  const url = `${API_BASE_URL}/courses`
-  const headers = getAuthHeaders()
-  
-  console.log('Fetching courses from:', url)
-  // Convert Headers object to plain object for logging
-  const headersObj = {}
-  headers.forEach((value, key) => {
-    // Mask token for security
-    if (key.toLowerCase() === 'authorization') {
-      headersObj[key] = value.substring(0, 20) + '...'
-    } else {
-      headersObj[key] = value
-    }
-  })
-  console.log('Request headers:', headersObj)
-  
+  const url = `${API_BASE_URL}/courses/public`
+
   try {
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: headers,
-      // Ensure proper encoding
-      credentials: 'same-origin',
-    })
-
-    console.log('Response status:', response.status, response.statusText)
-    console.log('Response headers:', Object.fromEntries(response.headers.entries()))
-
-    if (response.status === 401 || response.status === 403) {
-      const errorText = await response.text()
-      console.error('Authentication failed:', errorText)
-      throw new Error('Token không hợp lệ hoặc đã hết hạn. Vui lòng cập nhật token.')
-    }
+    const response = await fetch(url)
 
     if (!response.ok) {
       const errorText = await response.text()
       console.error('API Error Response:', errorText)
-      throw new Error(`HTTP ${response.status}: ${response.statusText}. ${errorText || ''}`)
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
     }
 
     const data = await response.json()
     console.log('API Response data:', data)
     return data
   } catch (error) {
-    // More detailed error logging
-    if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-      console.error('Network error - Cannot connect to API:', url)
-      console.error('Possible causes:')
-      console.error('1. API server is not running')
-      console.error('2. API URL is incorrect')
-      console.error('3. CORS issue - check server CORS settings')
-      throw new Error(`Không thể kết nối đến API server. Vui lòng kiểm tra:
-- Server API đã chạy chưa?
-- URL API có đúng không? (${url})
-- Có vấn đề CORS không?`)
-    }
-    
     console.error('Error fetching courses:', error)
+
+    // Lỗi fetch (network lỗi, server không chạy…)
+    if (error.name === 'TypeError') {
+      throw new Error(
+        `Không thể kết nối API:
+- Server chưa chạy
+- URL sai: ${url}
+- Lỗi mạng hoặc CORS`
+      )
+    }
+
     throw error
   }
 }
@@ -156,7 +126,7 @@ export const fetchCourseById = async (courseId) => {
  */
 export const fetchSubjects = async (params = {}) => {
   try {
-    const url = `${API_BASE_URL}/subjects`
+    const url = `${API_BASE_URL}/subjects/public`
     console.log('Fetching subjects from:', url)
     
     const headers = getAuthHeaders()
@@ -211,7 +181,7 @@ export const fetchSubjects = async (params = {}) => {
  */
 export const fetchBranches = async () => {
   try {
-    const url = `${API_BASE_URL}/branches`
+    const url = `${API_BASE_URL}/branches/public`
     console.log('Fetching branches from:', url)
     
     const headers = getAuthHeaders()
@@ -264,7 +234,7 @@ export const fetchBranches = async () => {
 export const createLead = async (leadData) => {
   try {
     // Use /api/tenant/leads endpoint
-    const url = '/api/tenant/leads'
+    const url = '/api/tenant/leads/public'
     console.log('Creating lead at:', url)
     
     const headers = getAuthHeaders()
