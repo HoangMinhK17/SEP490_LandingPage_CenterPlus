@@ -36,7 +36,28 @@ const gradeLabelMap = {
   G12: 'Lớp 12'
 }
 
+const subjectImageMap = {
+  hoahoc: '/CourseImage/hoahoc.jpg',
+  toanhoc: '/CourseImage/toanhoc.jpg',
+  tienganh: '/CourseImage/tienganh.jpg',
+  vanhoc: '/CourseImage/vanhoc.jpg',
+  vatli: '/CourseImage/vatli.jpg'
+}
+
 const getGradeLabel = (code) => gradeLabelMap[code] || code || 'Khối'
+
+const normalizeSubjectKey = (name = '') =>
+  name
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '')
+
+const getSubjectImage = (subjectName) => {
+  if (!subjectName) return null
+  const key = normalizeSubjectKey(subjectName)
+  return subjectImageMap[key] || null
+}
 
 const pageSize = 4
 
@@ -524,6 +545,7 @@ const getPriceHighlight = (course) => {
                 const subjectInfo = getCourseSubjectInfo(course)
                 const gradeCode = getCourseGradeCode(course)
                 const gradeLabel = gradeCode ? getGradeLabel(gradeCode) : ''
+                const subjectImage = getSubjectImage(subjectInfo.name)
 
                 return (
                   <Col xs={24} md={12} key={getCourseId(course) || getCourseTitle(course)}>
@@ -568,6 +590,19 @@ const getPriceHighlight = (course) => {
                         ) : null
                       }
                     >
+                      {subjectImage && (
+                        <div className="course-card-cover">
+                          <img
+                            src={subjectImage}
+                            alt={subjectInfo.name || 'Course illustration'}
+                            className="course-card-cover-image"
+                            loading="lazy"
+                          />
+                          <div className="course-card-cover-badge">
+                            <span>{subjectInfo.name}</span>
+                          </div>
+                        </div>
+                      )}
                       {renderPrice(course)}
 
                       <Divider />

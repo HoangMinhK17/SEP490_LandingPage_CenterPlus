@@ -40,6 +40,7 @@ const LeadModal = ({
   defaultSubjectName = ''
 }) => {
   const [form] = Form.useForm()
+  const [messageApi, contextHolder] = message.useMessage()
   const [loading, setLoading] = useState(false)
   const [fetching, setFetching] = useState(false)
   const [branches, setBranches] = useState([])
@@ -143,7 +144,7 @@ const LeadModal = ({
       }
 
       await createLead(payload)
-      message.success('Đăng ký tư vấn thành công. Chúng tôi sẽ liên hệ trong thời gian sớm nhất.')
+      messageApi.success('Đăng ký tư vấn thành công. Chúng tôi sẽ liên hệ trong thời gian sớm nhất.')
       onSuccess?.()
       onClose()
     } catch (err) {
@@ -159,7 +160,9 @@ const LeadModal = ({
   }
 
   return (
-    <Modal
+    <>
+      {contextHolder}
+      <Modal
       open={isOpen}
       onCancel={() => !loading && onClose()}
       onOk={handleSubmit}
@@ -305,6 +308,7 @@ const LeadModal = ({
         </Text>
       </Space>
     </Modal>
+    </>
   )
 }
 
