@@ -7,6 +7,7 @@ import {
   Divider,
   Empty,
   Input,
+  Pagination,
   Row,
   Select,
   Space,
@@ -25,12 +26,49 @@ import { fetchCourses } from '../services/api'
 const { Title, Paragraph, Text } = Typography
 const { Search } = Input
 
+const gradeLabelMap = {
+  G6: 'Lớp 6',
+  G7: 'Lớp 7',
+  G8: 'Lớp 8',
+  G9: 'Lớp 9',
+  G10: 'Lớp 10',
+  G11: 'Lớp 11',
+  G12: 'Lớp 12'
+}
+
+const subjectImageMap = {
+  hoahoc: '/CourseImage/hoahoc.jpg',
+  toanhoc: '/CourseImage/toanhoc.jpg',
+  tienganh: '/CourseImage/tienganh.jpg',
+  vanhoc: '/CourseImage/vanhoc.jpg',
+  vatli: '/CourseImage/vatli.jpg'
+}
+
+const getGradeLabel = (code) => gradeLabelMap[code] || code || 'Khối'
+
+const normalizeSubjectKey = (name = '') =>
+  name
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '')
+
+const getSubjectImage = (subjectName) => {
+  if (!subjectName) return null
+  const key = normalizeSubjectKey(subjectName)
+  return subjectImageMap[key] || null
+}
+
+const pageSize = 4
+
 const CourseInfo = ({ onRegisterCourse }) => {
   const [courses, setCourses] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedBranch, setSelectedBranch] = useState('all')
+  const [selectedGrade, setSelectedGrade] = useState('all')
+  const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
     const loadCourses = async () => {
@@ -76,7 +114,7 @@ const CourseInfo = ({ onRegisterCourse }) => {
     return modeMap[course.mode] || course.mode
   }
 
-  const getCourseBranchInfo = (course) => {
+const getCourseBranchInfo = (course) => {
     if (!course) return { id: '', name: '' }
 
     if (course.branch && typeof course.branch === 'object') {
@@ -272,6 +310,64 @@ const CourseInfo = ({ onRegisterCourse }) => {
     return 'Liên hệ'
   }
 
+const getPriceHighlight = (course) => {
+  const priceInfo = getPricesByMode(course)
+  if (!priceInfo) return null
+
+  const currencyMap = { VND: 'VNĐ', USD: 'USD', vnd: 'VNĐ', usd: 'USD' }
+  const { pricesByMode, generalPrice, currency, priceType } = priceInfo
+  const displayCurrency = currencyMap[currency] || currency || 'VNĐ'
+
+  if (generalPrice?.amount) {
+    const label =
+      course?.tuitionPlanBillingCycle === 'once' || priceType === 'session'
+        ? 'Học phí khóa học'
+        : 'Học phí theo chu kỳ'
+    let suffix = ''
+
+    if (label !== 'Học phí khóa học') {
+      suffix =
+        priceType === 'monthly' || course?.tuitionPlanBillingCycle === 'monthly'
+          ? '/tháng'
+          : priceType === 'session'
+            ? '/buổi'
+            : ''
+    }
+
+    return {
+      label,
+      value: `${new Intl.NumberFormat('vi-VN').format(generalPrice.amount)} ${displayCurrency}${suffix}`
+    }
+  }
+
+  if (priceInfo?.type === 'string') {
+    return {
+      label: 'Học phí',
+      value: priceInfo.value
+    }
+  }
+
+  if (pricesByMode?.length) {
+    const primaryPrice = pricesByMode.reduce((selected, price) => {
+      if (!selected) return price
+      return price.amount < selected.amount ? price : selected
+    }, null)
+
+    if (primaryPrice) {
+      const suffix = primaryPrice.source === 'monthly' ? '/tháng' : '/buổi'
+      const prefix = pricesByMode.length > 1 ? 'Từ ' : ''
+      return {
+        label: 'Học phí theo buổi',
+        value: `${prefix}${new Intl.NumberFormat('vi-VN').format(primaryPrice.amount)} ${
+          currencyMap[primaryPrice.currency] || primaryPrice.currency || displayCurrency
+        }${suffix}`
+      }
+    }
+  }
+
+  return null
+}
+
   const uniqueBranches = useMemo(() => {
     const set = new Set()
     courses.forEach((course) => {
@@ -279,6 +375,20 @@ const CourseInfo = ({ onRegisterCourse }) => {
       if (name) set.add(name)
     })
     return Array.from(set).sort()
+  }, [courses])
+
+  const uniqueGrades = useMemo(() => {
+    const set = new Set()
+    courses.forEach((course) => {
+      const code = getCourseGradeCode(course)
+      if (code) set.add(code)
+    })
+    return Array.from(set)
+      .sort()
+      .map((code) => ({
+        value: code,
+        label: getGradeLabel(code)
+      }))
   }, [courses])
 
   const filteredCourses = useMemo(() => {
@@ -289,16 +399,29 @@ const CourseInfo = ({ onRegisterCourse }) => {
       const query = searchQuery.trim().toLowerCase()
       const branch = getCourseBranchInfo(course).name
       const topics = getCourseTopics(course).join(' ').toLowerCase()
+      const gradeCode = getCourseGradeCode(course)
 
       const matchesSearch = !query || title.includes(query) || topics.includes(query)
       const matchesBranch = selectedBranch === 'all' || branch === selectedBranch
-      return matchesSearch && matchesBranch
+      const matchesGrade = selectedGrade === 'all' || gradeCode === selectedGrade
+      return matchesSearch && matchesBranch && matchesGrade
     })
-  }, [courses, searchQuery, selectedBranch])
+  }, [courses, searchQuery, selectedBranch, selectedGrade])
+
+  const paginatedCourses = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize
+    return filteredCourses.slice(startIndex, startIndex + pageSize)
+  }, [filteredCourses, currentPage])
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchQuery, selectedBranch, selectedGrade])
 
   const handleResetFilters = () => {
     setSearchQuery('')
     setSelectedBranch('all')
+    setSelectedGrade('all')
+    setCurrentPage(1)
   }
 
   const renderPrice = (course) => {
@@ -341,7 +464,7 @@ const CourseInfo = ({ onRegisterCourse }) => {
 
           <Card bordered={false} className="course-filter-card">
             <Row gutter={[16, 16]}>
-              <Col xs={24} md={12}>
+              <Col xs={24} md={8}>
                 <Search
                   placeholder="Tìm theo tên khóa học hoặc nội dung"
                   allowClear
@@ -351,7 +474,7 @@ const CourseInfo = ({ onRegisterCourse }) => {
                   onChange={(event) => setSearchQuery(event.target.value)}
                 />
               </Col>
-              <Col xs={24} md={12}>
+              <Col xs={24} md={8}>
                 <Select
                   size="large"
                   value={selectedBranch}
@@ -366,9 +489,22 @@ const CourseInfo = ({ onRegisterCourse }) => {
                   ]}
                 />
               </Col>
+              <Col xs={24} md={8}>
+                <Select
+                  size="large"
+                  value={selectedGrade}
+                  onChange={setSelectedGrade}
+                  style={{ width: '100%' }}
+                  placeholder="Chọn khối lớp"
+                  options={[
+                    { value: 'all', label: `Tất cả khối lớp (${courses.length})` },
+                    ...uniqueGrades
+                  ]}
+                />
+              </Col>
             </Row>
 
-            {(searchQuery || selectedBranch !== 'all') && (
+            {(searchQuery || selectedBranch !== 'all' || selectedGrade !== 'all') && (
               <Space
                 style={{ marginTop: 16 }}
                 wrap
@@ -399,11 +535,17 @@ const CourseInfo = ({ onRegisterCourse }) => {
               </Empty>
             </Card>
           ) : (
-            <Row gutter={[24, 24]}>
-              {filteredCourses.map((course) => {
+            <>
+              <Row gutter={[24, 24]}>
+                {paginatedCourses.map((course) => {
                 const status = course?.status === 'active'
                 const priceDisplay = formatPrice(course)
+                const priceHighlight = getPriceHighlight(course)
                 const branchInfo = getCourseBranchInfo(course)
+                const subjectInfo = getCourseSubjectInfo(course)
+                const gradeCode = getCourseGradeCode(course)
+                const gradeLabel = gradeCode ? getGradeLabel(gradeCode) : ''
+                const subjectImage = getSubjectImage(subjectInfo.name)
 
                 return (
                   <Col xs={24} md={12} key={getCourseId(course) || getCourseTitle(course)}>
@@ -427,18 +569,40 @@ const CourseInfo = ({ onRegisterCourse }) => {
                             {getCourseMode(course) && (
                               <Tag color="purple">{getCourseMode(course)}</Tag>
                             )}
+                            {gradeLabel && <Tag color="cyan">{gradeLabel}</Tag>}
+                            {subjectInfo.name && <Tag color="geekblue">{subjectInfo.name}</Tag>}
                           </Space>
                         </Space>
                       }
                       extra={
-                        typeof priceDisplay === 'string' ? (
-                          <Space align="center">
-                            <DollarCircleOutlined style={{ color: '#5b7bff' }} />
-                            <Text strong>{priceDisplay}</Text>
-                          </Space>
+                        priceHighlight ? (
+                          <div className="course-price-highlight">
+                            <div className="course-price-highlight-icon">
+                              <DollarCircleOutlined />
+                            </div>
+                            <Space direction="vertical" size={0} className="course-price-highlight-info">
+                              <Text type="secondary" style={{ fontSize: 12 }}>
+                                {priceHighlight.label}
+                              </Text>
+                              <Text strong>{priceHighlight.value}</Text>
+                            </Space>
+                          </div>
                         ) : null
                       }
                     >
+                      {subjectImage && (
+                        <div className="course-card-cover">
+                          <img
+                            src={subjectImage}
+                            alt={subjectInfo.name || 'Course illustration'}
+                            className="course-card-cover-image"
+                            loading="lazy"
+                          />
+                          <div className="course-card-cover-badge">
+                            <span>{subjectInfo.name}</span>
+                          </div>
+                        </div>
+                      )}
                       {renderPrice(course)}
 
                       <Divider />
@@ -464,6 +628,9 @@ const CourseInfo = ({ onRegisterCourse }) => {
                           onRegisterCourse?.({
                             branchId: branchInfo.id || '',
                             branchName: branchInfo.name || '',
+                            gradeCode: gradeCode || '',
+                            subjectId: subjectInfo.id || '',
+                            subjectName: subjectInfo.name || '',
                             courseId: getCourseId(course),
                             courseName: getCourseTitle(course)
                           })
@@ -474,8 +641,19 @@ const CourseInfo = ({ onRegisterCourse }) => {
                     </Card>
                   </Col>
                 )
-              })}
-            </Row>
+                })}
+              </Row>
+              <div className="course-pagination">
+                <Pagination
+                  current={currentPage}
+                  pageSize={pageSize}
+                  total={filteredCourses.length}
+                  showSizeChanger={false}
+                  hideOnSinglePage={false}
+                  onChange={(page) => setCurrentPage(page)}
+                />
+              </div>
+            </>
           )}
 
           <Card bordered={false} className="course-summary-card">
@@ -504,6 +682,59 @@ const CourseInfo = ({ onRegisterCourse }) => {
       </div>
     </section>
   )
+}
+
+const getCourseGradeCode = (course) =>
+  course?.gradeCode ||
+  course?.grade?.code ||
+  course?.grade?.gradeCode ||
+  course?.grade ||
+  course?.grade_code ||
+  ''
+
+const getCourseSubjectInfo = (course) => {
+  if (!course) return { id: '', name: '' }
+
+  if (course.subjectId) {
+    if (typeof course.subjectId === 'object') {
+      return {
+        id:
+          course.subjectId.id ||
+          course.subjectId._id ||
+          course.subjectId.subjectId ||
+          course.subjectId.subject_id ||
+          '',
+        name: course.subjectId.name || course.subjectId.subjectName || course.subjectName || ''
+      }
+    }
+
+    return {
+      id: course.subjectId,
+      name: course.subjectName || course.subject || ''
+    }
+  }
+
+  if (course.subject) {
+    if (typeof course.subject === 'object') {
+      return {
+        id:
+          course.subject.id ||
+          course.subject._id ||
+          course.subject.subjectId ||
+          course.subject.subject_id ||
+          course.subjectId ||
+          '',
+        name: course.subject.name || course.subject.subjectName || course.subjectName || ''
+      }
+    }
+
+    return {
+      id: course.subjectId || '',
+      name: course.subject
+    }
+  }
+
+  return { id: '', name: '' }
 }
 
 export default CourseInfo
