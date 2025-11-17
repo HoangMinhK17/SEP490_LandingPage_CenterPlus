@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react'
 import {
   Alert,
+  Col,
   Form,
   Input,
   Modal,
+  Row,
   Select,
   Space,
   Typography,
@@ -32,7 +34,10 @@ const LeadModal = ({
   defaultBranchId = '',
   defaultBranchName = '',
   defaultCourseId = '',
-  defaultCourseName = ''
+  defaultCourseName = '',
+  defaultGradeCode = '',
+  defaultSubjectId = '',
+  defaultSubjectName = ''
 }) => {
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
@@ -40,6 +45,7 @@ const LeadModal = ({
   const [branches, setBranches] = useState([])
   const [subjects, setSubjects] = useState([])
   const [error, setError] = useState(null)
+  const isCourseLocked = Boolean(defaultCourseId)
 
   useEffect(() => {
     if (!isOpen) return
@@ -48,7 +54,9 @@ const LeadModal = ({
     form.setFieldsValue({
       branchId: defaultBranchId || undefined,
       courseId: defaultCourseId || undefined,
-      courseName: defaultCourseName || ''
+      courseName: defaultCourseName || '',
+      gradeCode: defaultGradeCode || undefined,
+      interestedSubjectIds: defaultSubjectId ? [defaultSubjectId] : []
     })
     setError(null)
 
@@ -73,12 +81,24 @@ const LeadModal = ({
             label: branch.name || branch.branchName || 'Chi nhánh'
           }))
         )
-        setSubjects(
-          normalizedSubjects.map((subject) => ({
+        setSubjects(() => {
+          const mapped = normalizedSubjects.map((subject) => ({
             value: subject.id || subject._id,
             label: subject.name || subject.subjectName || 'Môn học'
           }))
-        )
+
+          if (defaultSubjectId && !mapped.find((subject) => subject.value === defaultSubjectId)) {
+            return [
+              {
+                value: defaultSubjectId,
+                label: defaultSubjectName || 'Môn học đã chọn'
+              },
+              ...mapped
+            ]
+          }
+
+          return mapped
+        })
       } catch (err) {
         setError(err?.message || 'Không thể tải dữ liệu chi nhánh/ môn học.')
       } finally {
@@ -87,7 +107,16 @@ const LeadModal = ({
     }
 
     loadData()
-  }, [isOpen, defaultBranchId, defaultCourseId, defaultCourseName, form])
+  }, [
+    isOpen,
+    defaultBranchId,
+    defaultCourseId,
+    defaultCourseName,
+    defaultGradeCode,
+    defaultSubjectId,
+    defaultSubjectName,
+    form
+  ])
 
   const handleSubmit = async () => {
     try {
@@ -154,6 +183,13 @@ const LeadModal = ({
               {defaultBranchName && (
                 <Tag color="purple">Chi nhánh: {defaultBranchName}</Tag>
               )}
+              {defaultGradeCode && (
+                <Tag color="green">
+                  Khối:{' '}
+                  {gradeOptions.find((option) => option.value === defaultGradeCode)?.label || defaultGradeCode}
+                </Tag>
+              )}
+              {defaultSubjectName && <Tag color="gold">Môn: {defaultSubjectName}</Tag>}
             </Space>
           </Space>
         )}
@@ -173,30 +209,36 @@ const LeadModal = ({
               phone: '',
               email: '',
               branchId: defaultBranchId || undefined,
-              gradeCode: undefined,
-              interestedSubjectIds: [],
+              gradeCode: defaultGradeCode || undefined,
+              interestedSubjectIds: defaultSubjectId ? [defaultSubjectId] : [],
               notes: ''
             }}
           >
-            <Form.Item
-              label="Họ"
-              name="lastName"
-              rules={[{ required: true, message: 'Vui lòng nhập họ' }]}
-            >
-              <Input placeholder="Nguyễn" />
-            </Form.Item>
-
-            <Form.Item label="Tên đệm" name="middleName">
-              <Input placeholder="Văn" />
-            </Form.Item>
-
-            <Form.Item
-              label="Tên"
-              name="firstName"
-              rules={[{ required: true, message: 'Vui lòng nhập tên' }]}
-            >
-              <Input placeholder="An" />
-            </Form.Item>
+            <Row gutter={[16, 16]}>
+              <Col xs={24} md={8}>
+                <Form.Item
+                  label="Họ"
+                  name="lastName"
+                  rules={[{ required: true, message: 'Vui lòng nhập họ' }]}
+                >
+                  <Input placeholder="Nguyễn" />
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={8}>
+                <Form.Item label="Tên đệm" name="middleName">
+                  <Input placeholder="Văn" />
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={8}>
+                <Form.Item
+                  label="Tên"
+                  name="firstName"
+                  rules={[{ required: true, message: 'Vui lòng nhập tên' }]}
+                >
+                  <Input placeholder="An" />
+                </Form.Item>
+              </Col>
+            </Row>
 
             <Form.Item
               label="Số điện thoại"
@@ -229,6 +271,7 @@ const LeadModal = ({
                 placeholder="Chọn chi nhánh bạn muốn học"
                 options={branches}
                 loading={fetching}
+                disabled={isCourseLocked}
               />
             </Form.Item>
 
@@ -237,16 +280,17 @@ const LeadModal = ({
               name="gradeCode"
               rules={[{ required: true, message: 'Vui lòng chọn khối lớp' }]}
             >
-              <Select placeholder="Chọn khối lớp" options={gradeOptions} />
+              <Select placeholder="Chọn khối lớp" options={gradeOptions} disabled={isCourseLocked} />
             </Form.Item>
 
             <Form.Item label="Môn học quan tâm" name="interestedSubjectIds">
               <Select
                 mode="multiple"
-                allowClear
+                allowClear={!isCourseLocked}
                 placeholder="Chọn tối đa 3 môn học"
                 options={subjects}
                 maxTagCount={3}
+                disabled={isCourseLocked}
               />
             </Form.Item>
 

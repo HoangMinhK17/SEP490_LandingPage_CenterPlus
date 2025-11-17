@@ -19,7 +19,10 @@ function App() {
     branchId: '',
     branchName: '',
     courseId: '',
-    courseName: ''
+    courseName: '',
+    gradeCode: '',
+    subjectId: '',
+    subjectName: ''
   })
 
   const handleOpenLeadModal = (config = {}) => {
@@ -27,7 +30,10 @@ function App() {
       branchId: config.branchId || '',
       branchName: config.branchName || '',
       courseId: config.courseId || '',
-      courseName: config.courseName || ''
+      courseName: config.courseName || '',
+      gradeCode: config.gradeCode || '',
+      subjectId: config.subjectId || '',
+      subjectName: config.subjectName || ''
     })
     setIsLeadModalOpen(true)
   }
@@ -60,6 +66,9 @@ function App() {
         defaultBranchName={leadModalDefaults.branchName}
         defaultCourseId={leadModalDefaults.courseId}
         defaultCourseName={leadModalDefaults.courseName}
+        defaultGradeCode={leadModalDefaults.gradeCode}
+        defaultSubjectId={leadModalDefaults.subjectId}
+        defaultSubjectName={leadModalDefaults.subjectName}
       />
     </Layout>
   )
