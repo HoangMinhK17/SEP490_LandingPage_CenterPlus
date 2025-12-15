@@ -40,8 +40,12 @@ const subjectImageMap = {
   hoahoc: '/CourseImage/hoahoc.jpg',
   toanhoc: '/CourseImage/toanhoc.jpg',
   tienganh: '/CourseImage/tienganh.jpg',
+  nguvan: '/CourseImage/vanhoc.jpg',
   vanhoc: '/CourseImage/vanhoc.jpg',
-  vatli: '/CourseImage/vatli.jpg'
+  tinhoc: '/CourseImage/tinhoc.png',
+  vatli: '/CourseImage/vatli.jpg' ,
+  vatly: '/CourseImage/vatli.jpg',
+  sinhhoc: '/CourseImage/sinhhoc.png'
 }
 
 const getGradeLabel = (code) => gradeLabelMap[code] || code || 'Khối'
